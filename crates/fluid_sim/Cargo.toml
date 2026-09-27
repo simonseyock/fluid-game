@@ -1,0 +1,8 @@
+[package]
+name = "fluid_sim"
+description = "Deterministic fluid-game simulation core (ADR 0002). No engine dependencies."
+edition.workspace = true
+version.workspace = true
+publish.workspace = true
+
+[dependencies]

@@ -16,12 +16,33 @@ See [`MISSION.md`](MISSION.md) for the full vision and
    ```sh
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    ```
-2. Install Bevy's Linux build dependencies:
-   ```sh
-   sudo apt install pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
-   ```
+2. That's it for now. The game builds with Bevy's X11 backend only (no audio,
+   no gamepads), so no extra system packages are needed. On a Wayland desktop
+   it runs through XWayland.
 
-Run and test commands will be added here once the first code slice exists.
+The first build compiles Bevy and takes several minutes. Later builds are fast.
+
+## Layout
+
+- `crates/fluid_sim`: the deterministic simulation core (ADR 0002). Plain Rust,
+  no Bevy.
+- `crates/fluid_game`: the Bevy desktop app: input, rendering, fixed-timestep loop.
+
+## Run
+
+```sh
+cargo run -p fluid_game
+```
+
+Controls: player 1 (cyan) uses **WASD**, player 2 (magenta) uses the **arrow keys**.
+
+## Test
+
+```sh
+cargo test -p fluid_sim          # simulation rules
+cargo clippy --workspace --all-targets
+cargo fmt --all --check
+```
 
 ## Contributing
 
