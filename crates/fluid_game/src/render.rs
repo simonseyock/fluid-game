@@ -75,6 +75,17 @@ fn draw_grid(
     let Some(mut image) = images.get_mut(&sprite.image) else {
         return;
     };
+    // The grid size can change between matches (setup screen): keep one
+    // texel per cell.
+    let grid = &sim.0.grid;
+    let (w, h) = (grid.width() as u32, grid.height() as u32);
+    if (image.width(), image.height()) != (w, h) {
+        image.resize(Extent3d {
+            width: w,
+            height: h,
+            depth_or_array_layers: 1,
+        });
+    }
     if let Some(data) = image.data.as_mut() {
         paint(&sim.0, data);
     }

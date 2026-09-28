@@ -20,3 +20,5 @@ bevy = { version = "=0.19.1", default-features = false, features = [
     "tonemapping_luts",
     "zstd_rust",
 ] }
+# Setup screen UI (ADR 0001). Only rendering and fonts: no bevy_ui, picking or clipboard.
+bevy_egui = { version = "=0.42.0", default-features = false, features = ["render", "default_fonts"] }
