@@ -10,12 +10,14 @@ use fluid_sim::Cell;
 use crate::Sim;
 
 /// Neon color per player slot, as RGBA.
-const PLAYER_COLORS: [[u8; 4]; 4] = [
+pub const PLAYER_COLORS: [[u8; 4]; 4] = [
     [0, 255, 255, 255], // cyan
     [255, 0, 200, 255], // magenta
     [170, 255, 0, 255], // lime
     [255, 140, 0, 255], // orange
 ];
+/// Display name per player slot, matching `PLAYER_COLORS`.
+pub const PLAYER_NAMES: [&str; 4] = ["Cyan", "Magenta", "Lime", "Orange"];
 const BACKGROUND: [u8; 4] = [0, 0, 0, 255];
 const OBSTACLE: [u8; 4] = [40, 40, 70, 255];
 const CURSOR: [u8; 4] = [255, 255, 255, 255];

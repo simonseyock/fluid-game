@@ -32,6 +32,9 @@ pub struct MatchConfig {
     pub fluid_speed: i32,
     /// Obstacle layout, scaled to the grid size.
     pub map: Map,
+    /// Match length in ticks. The simulation only counts ticks; the app
+    /// decides how many ticks make a second (ADR 0002).
+    pub match_ticks: u64,
 }
 
 impl Default for MatchConfig {
@@ -43,6 +46,8 @@ impl Default for MatchConfig {
             cursor_speed: SUBCELL / 2,
             fluid_speed: SUBCELL / 3,
             map: Map::EMPTY,
+            // Three minutes at 60 ticks per second.
+            match_ticks: 3 * 60 * 60,
         }
     }
 }
@@ -60,6 +65,15 @@ impl Cursor {
     pub fn cell(&self) -> (usize, usize) {
         ((self.x / SUBCELL) as usize, (self.y / SUBCELL) as usize)
     }
+}
+
+/// How a match ended (ADR 0005).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Outcome {
+    /// The last colour left, or the most cells when time ran out.
+    Winner(PlayerId),
+    /// Time ran out with these players sharing the most cells.
+    Tie(Vec<PlayerId>),
 }
 
 /// The whole match state. Two states built from the same config and fed the
@@ -117,9 +131,47 @@ impl GameState {
         self.grid.count(Cell::Fluid(player))
     }
 
+    /// Ticks left on the match clock.
+    pub fn remaining_ticks(&self) -> u64 {
+        self.config.match_ticks.saturating_sub(self.tick)
+    }
+
+    /// A player whose colour has no cells left is out (ADR 0005).
+    pub fn is_eliminated(&self, player: PlayerId) -> bool {
+        self.fluid_count(player) == 0
+    }
+
+    /// `None` while the match is running. Otherwise the last colour left, or,
+    /// once the clock runs out, the player with the most cells (ties stay ties).
+    pub fn outcome(&self) -> Option<Outcome> {
+        let counts: Vec<usize> = (0..self.player_count() as PlayerId)
+            .map(|p| self.fluid_count(p))
+            .collect();
+        let alive: Vec<PlayerId> = (0..counts.len() as PlayerId)
+            .filter(|&p| counts[p as usize] > 0)
+            .collect();
+        if let [last] = alive[..] {
+            return Some(Outcome::Winner(last));
+        }
+        if self.remaining_ticks() > 0 {
+            return None;
+        }
+        let most = counts.iter().copied().max().unwrap_or(0);
+        let leaders: Vec<PlayerId> = (0..counts.len() as PlayerId)
+            .filter(|&p| counts[p as usize] == most)
+            .collect();
+        Some(match leaders[..] {
+            [winner] => Outcome::Winner(winner),
+            _ => Outcome::Tie(leaders),
+        })
+    }
+
     /// Advance one tick. `commands[p]` is player `p`'s command; missing
-    /// entries count as `Idle`.
+    /// entries count as `Idle`. Does nothing once the match is over.
     pub fn step(&mut self, commands: &[Command]) {
+        if self.outcome().is_some() {
+            return;
+        }
         for p in 0..self.player_count() {
             let command = commands.get(p).copied().unwrap_or_default();
             self.move_cursor(p, command);

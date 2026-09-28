@@ -14,4 +14,4 @@ mod state;
 pub use command::Command;
 pub use grid::{Cell, Grid, PlayerId};
 pub use map::{Map, Rect};
-pub use state::{Cursor, GameState, MatchConfig, SUBCELL};
+pub use state::{Cursor, GameState, MatchConfig, Outcome, SUBCELL};
