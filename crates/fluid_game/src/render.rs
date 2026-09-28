@@ -5,7 +5,7 @@ use bevy::asset::RenderAssetUsages;
 use bevy::image::ImageSampler;
 use bevy::prelude::*;
 use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
-use fluid_sim::Cell;
+use fluid_sim::{Cell, GameState};
 
 use crate::Sim;
 use crate::layout::GridLayout;
@@ -21,7 +21,18 @@ pub const PLAYER_COLORS: [[u8; 4]; 4] = [
 pub const PLAYER_NAMES: [&str; 4] = ["Cyan", "Magenta", "Lime", "Orange"];
 const BACKGROUND: [u8; 4] = [0, 0, 0, 255];
 const OBSTACLE: [u8; 4] = [40, 40, 70, 255];
-const CURSOR: [u8; 4] = [255, 255, 255, 255];
+/// A cursor: a plus-shaped cross, and the cells around it as its outline.
+const CURSOR_CROSS: [(i64, i64); 5] = [(0, 0), (-1, 0), (1, 0), (0, -1), (0, 1)];
+const CURSOR_OUTLINE: [(i64, i64); 8] = [
+    (-2, 0),
+    (2, 0),
+    (0, -2),
+    (0, 2),
+    (-1, -1),
+    (1, -1),
+    (-1, 1),
+    (1, 1),
+];
 
 pub struct RenderPlugin;
 
@@ -64,10 +75,15 @@ fn draw_grid(
     let Some(mut image) = images.get_mut(&sprite.image) else {
         return;
     };
-    let Some(data) = image.data.as_mut() else {
-        return;
-    };
-    let state = &sim.0;
+    if let Some(data) = image.data.as_mut() {
+        paint(&sim.0, data);
+    }
+}
+
+/// Paint `state` into an RGBA buffer with one texel per cell, row by row.
+/// Cursors go on top: a cross in the player's colour inside a black outline,
+/// so it stands out on black background and on any fluid, its own included.
+pub fn paint(state: &GameState, data: &mut [u8]) {
     for (texel, cell) in data
         .as_chunks_mut::<4>()
         .0
@@ -77,22 +93,31 @@ fn draw_grid(
         let color = match *cell {
             Cell::Empty => BACKGROUND,
             Cell::Obstacle => OBSTACLE,
-            Cell::Fluid(p) => PLAYER_COLORS[p as usize % PLAYER_COLORS.len()],
+            Cell::Fluid(p) => player_color(p as usize),
         };
         texel.copy_from_slice(&color);
     }
-    // Cursors as small white crosses.
-    let (w, h) = (state.grid.width(), state.grid.height());
-    for cursor in &state.cursors {
+    let (w, h) = (state.grid.width() as i64, state.grid.height() as i64);
+    let mut put = |x: i64, y: i64, color: &[u8; 4]| {
+        if (0..w).contains(&x) && (0..h).contains(&y) {
+            let i = (y * w + x) as usize * 4;
+            data[i..i + 4].copy_from_slice(color);
+        }
+    };
+    for (p, cursor) in state.cursors.iter().enumerate() {
         let (cx, cy) = cursor.cell();
-        for (dx, dy) in [(0, 0), (-1, 0), (1, 0), (0, -1), (0, 1)] {
-            let (x, y) = (cx as i64 + dx, cy as i64 + dy);
-            if (0..w as i64).contains(&x) && (0..h as i64).contains(&y) {
-                let i = (y as usize * w + x as usize) * 4;
-                data[i..i + 4].copy_from_slice(&CURSOR);
-            }
+        let (cx, cy) = (cx as i64, cy as i64);
+        for (dx, dy) in CURSOR_OUTLINE {
+            put(cx + dx, cy + dy, &BACKGROUND);
+        }
+        for (dx, dy) in CURSOR_CROSS {
+            put(cx + dx, cy + dy, &player_color(p));
         }
     }
+}
+
+fn player_color(p: usize) -> [u8; 4] {
+    PLAYER_COLORS[p % PLAYER_COLORS.len()]
 }
 
 /// Scale the grid to the largest size that fits the window, keeping cells square.
