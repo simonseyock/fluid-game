@@ -25,7 +25,7 @@ The first build compiles Bevy and takes several minutes. Later builds are fast.
 ## Layout
 
 - `crates/fluid_sim`: the deterministic simulation core (ADR 0002). Plain Rust,
-  no Bevy.
+  no Bevy. Tests are in `crates/fluid_sim/tests/`.
 - `crates/fluid_game`: the Bevy desktop app: input, rendering, fixed-timestep loop.
 
 ## Run

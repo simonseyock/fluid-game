@@ -37,6 +37,13 @@ itself with a concrete test before the next slice starts.
 4. **Split up front.** If work doesn't fit one slice, break it into an ordered
    list of slices (as linked issues) before writing code.
 
+## Tests
+
+- Tests live in each crate's `tests/` folder, next to `src/`, never in
+  `#[cfg(test)]` modules inside `src/`. They test through the crate's public API.
+- One file per topic (e.g. `tests/cursor.rs`, `tests/fluid.rs`). Shared helpers
+  go in `tests/common/mod.rs`, and only helpers used by more than one file.
+
 ## Commits and pull requests
 
 - Commit each finished, verified slice without asking first, but **never push
