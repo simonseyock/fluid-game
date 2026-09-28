@@ -40,7 +40,8 @@ player 3 (lime) the **mouse**. During a match the mouse pointer is hidden and
 held inside the window; it's released when the match ends or the window loses
 focus.
 A match lasts 3 minutes. It ends early when only one colour is left; otherwise
-the most cells wins. Press **Enter** after a match for a rematch.
+the most cells wins. Press **Enter** after a match for a rematch, and **Esc**
+at any time to quit.
 
 ## Test
 

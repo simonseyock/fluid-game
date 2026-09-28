@@ -1,10 +1,11 @@
-//! Local input: grid layout in the window, pointer-to-cell conversion, and
-//! per-slot devices (ADR 0004, 0005, 0006).
+//! Local input: grid layout in the window, pointer-to-cell conversion,
+//! per-slot devices (ADR 0004, 0005, 0006), and quitting with Esc.
 
+use bevy::app::{App, AppExit, Update};
 use bevy::input::ButtonInput;
 use bevy::math::Vec2;
 use bevy::prelude::KeyCode;
-use fluid_game::input::{Device, commands};
+use fluid_game::input::{Device, commands, quit_on_escape};
 use fluid_game::layout::GridLayout;
 use fluid_sim::Command;
 
@@ -68,4 +69,18 @@ fn idle_without_input() {
         commands(&devices, &keys, None),
         vec![Command::Idle, Command::Idle]
     );
+}
+
+#[test]
+fn escape_quits_the_game() {
+    let mut app = App::new();
+    app.init_resource::<ButtonInput<KeyCode>>()
+        .add_systems(Update, quit_on_escape);
+    app.update();
+    assert_eq!(app.should_exit(), None, "no quitting without Esc");
+    app.world_mut()
+        .resource_mut::<ButtonInput<KeyCode>>()
+        .press(KeyCode::Escape);
+    app.update();
+    assert_eq!(app.should_exit(), Some(AppExit::Success));
 }

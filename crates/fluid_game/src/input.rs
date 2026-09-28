@@ -79,7 +79,14 @@ pub struct InputPlugin;
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MouseTarget>()
-            .add_systems(Update, (track_mouse, grab_pointer));
+            .add_systems(Update, (track_mouse, grab_pointer, quit_on_escape));
+    }
+}
+
+/// Esc quits the game, even mid-match with the pointer grabbed.
+pub fn quit_on_escape(keys: Res<ButtonInput<KeyCode>>, mut exit: MessageWriter<AppExit>) {
+    if keys.just_pressed(KeyCode::Escape) {
+        exit.write(AppExit::Success);
     }
 }
 
