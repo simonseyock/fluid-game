@@ -6,6 +6,7 @@
 
 mod command;
 mod distance;
+mod encircle;
 mod grid;
 mod map;
 mod state;

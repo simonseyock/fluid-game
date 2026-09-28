@@ -141,6 +141,7 @@ impl GameState {
             for (p, dist) in distances.iter().enumerate() {
                 self.equalize_pressure(p as PlayerId, dist);
             }
+            self.grid.flip_outnumbered();
         }
         self.tick += 1;
     }
