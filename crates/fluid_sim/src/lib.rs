@@ -7,8 +7,10 @@
 mod command;
 mod distance;
 mod grid;
+mod map;
 mod state;
 
 pub use command::Command;
 pub use grid::{Cell, Grid, PlayerId};
+pub use map::{Map, Rect};
 pub use state::{Cursor, GameState, MatchConfig, SUBCELL};

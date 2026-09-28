@@ -6,7 +6,7 @@ mod input;
 mod render;
 
 use bevy::prelude::*;
-use fluid_sim::{GameState, MatchConfig};
+use fluid_sim::{GameState, Map, MatchConfig};
 
 /// Simulation ticks per second. The real clock only decides how many ticks run
 /// per frame; the simulation itself counts ticks (ADR 0002).
@@ -26,7 +26,10 @@ fn main() {
             ..default()
         }))
         .insert_resource(Time::<Fixed>::from_hz(TICK_HZ))
-        .insert_resource(Sim(GameState::new(MatchConfig::default())))
+        .insert_resource(Sim(GameState::new(MatchConfig {
+            map: Map::PILLARS,
+            ..MatchConfig::default()
+        })))
         .add_systems(FixedUpdate, tick)
         .add_plugins(render::RenderPlugin)
         .run();
