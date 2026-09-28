@@ -43,8 +43,11 @@ the match.
 A match ends early when only one colour is left; otherwise the most cells wins
 when the clock runs out. **Enter** then returns to the setup screen with your
 choices kept. During a match with a mouse player, the pointer is hidden and held
-inside the window; it's released when the match ends or the window loses focus.
-**Esc** quits at any time.
+inside the window; it's released when the match ends, the game is paused, or
+the window loses focus.
+
+**Esc** during a match pauses and asks whether to continue or go back to the
+setup screen (Esc again continues). On the setup screen, **Esc** quits.
 
 ## Test
 

@@ -5,6 +5,7 @@
 pub mod hud;
 pub mod input;
 pub mod layout;
+pub mod pause;
 pub mod render;
 pub mod setup;
 
@@ -36,7 +37,11 @@ pub fn run() {
         .insert_resource(LocalControls(choices.devices.clone()))
         .insert_resource(Sim(GameState::new(choices.match_config())))
         .add_plugins(setup::SetupPlugin)
-        .add_systems(FixedUpdate, tick.run_if(in_state(Screen::Match)))
+        .add_plugins(pause::PausePlugin)
+        .add_systems(
+            FixedUpdate,
+            tick.run_if(in_state(Screen::Match).and_then(pause::not_paused)),
+        )
         .add_plugins((render::RenderPlugin, hud::HudPlugin, input::InputPlugin))
         .run();
 }

@@ -8,6 +8,7 @@ use fluid_sim::Command;
 
 use crate::Sim;
 use crate::layout::GridLayout;
+use crate::pause::Paused;
 use crate::setup::Screen;
 
 /// The device driving one local player slot.
@@ -80,11 +81,12 @@ pub struct InputPlugin;
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MouseTarget>()
-            .add_systems(Update, (track_mouse, grab_pointer, quit_on_escape));
+            .add_systems(Update, (track_mouse, grab_pointer))
+            .add_systems(Update, quit_on_escape.run_if(in_state(Screen::Setup)));
     }
 }
 
-/// Esc quits the game, even mid-match with the pointer grabbed.
+/// Esc on the setup screen quits the game. (During a match, Esc pauses.)
 pub fn quit_on_escape(keys: Res<ButtonInput<KeyCode>>, mut exit: MessageWriter<AppExit>) {
     if keys.just_pressed(KeyCode::Escape) {
         exit.write(AppExit::Success);
@@ -105,16 +107,18 @@ fn track_mouse(
 
 /// While a match with a mouse player runs and the window has focus, hide the
 /// OS pointer and keep it inside the window (ADR 0004). Release it otherwise,
-/// including on the setup screen.
+/// including on the setup screen and while paused.
 fn grab_pointer(
     window: Single<(&Window, &mut CursorOptions), With<PrimaryWindow>>,
     sim: Res<Sim>,
     controls: Res<LocalControls>,
     screen: Res<State<Screen>>,
+    paused: Res<Paused>,
 ) {
     let (window, mut cursor) = window.into_inner();
     let grab = window.focused
         && *screen.get() == Screen::Match
+        && !paused.0
         && sim.0.outcome().is_none()
         && controls.0.contains(&Device::Mouse);
     let (visible, mode) = if grab {
