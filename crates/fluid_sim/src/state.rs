@@ -141,7 +141,15 @@ impl GameState {
             for (p, dist) in distances.iter().enumerate() {
                 self.equalize_pressure(p as PlayerId, dist);
             }
-            self.grid.flip_outnumbered();
+            // Fluid pushes into a neighbour that is closer to its own cursor.
+            let cells = self.grid.cells().to_vec();
+            self.grid.flip_outnumbered(|from, into| match cells[from] {
+                Cell::Fluid(p) => {
+                    let dist = &distances[p as usize];
+                    dist[into] < dist[from]
+                }
+                _ => false,
+            });
         }
         self.tick += 1;
     }

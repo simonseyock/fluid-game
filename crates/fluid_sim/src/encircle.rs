@@ -1,19 +1,26 @@
 //! Encirclement, prototype rule (issue #5; the final rules get their own ADR).
 //!
-//! A local majority vote: a fluid cell flips to an opponent's colour when more
-//! of its 8 neighbours are opponents than its own colour. Flat fronts hold,
-//! bulges into enemy fluid are lost, and small enclosed blobs are eaten from
-//! the outside in.
+//! A local majority vote: a fluid cell flips to an opponent's colour when its
+//! 8 neighbours cast more opponent votes than own-colour votes. A neighbour
+//! that is pushing into the cell (wants to move there, toward its cursor)
+//! votes `PUSH_WEIGHT` times, so moving fluid beats resting fluid: a pushing
+//! front takes a standing one, two pushing fronts hold, bulges into enemy
+//! fluid are lost, and small enclosed blobs are eaten from the outside in.
 
 use crate::state::MAX_PLAYERS as MAX_PLAYER_SLOTS;
 use crate::{Cell, Grid};
 
+/// Votes cast by a neighbour that is pushing into the cell (others cast 1).
+const PUSH_WEIGHT: u8 = 2;
+
 impl Grid {
     /// Apply one round of the majority rule to every fluid cell at once, all
-    /// deciding from the same snapshot. A cell flips to the opponent with the
-    /// most neighbours; a tie between opponents means no flip. Empty cells and
-    /// obstacles don't count. Returns how many cells flipped.
-    pub fn flip_outnumbered(&mut self) -> usize {
+    /// deciding from the same snapshot. `pushes(from, into)` says whether the
+    /// fluid at cell `from` is pushing into neighbouring cell `into`. A cell
+    /// flips to the opponent with the most votes; a tie between opponents
+    /// means no flip. Empty cells and obstacles don't vote. Returns how many
+    /// cells flipped.
+    pub fn flip_outnumbered(&mut self, pushes: impl Fn(usize, usize) -> bool) -> usize {
         let (w, h) = (self.width() as i64, self.height() as i64);
         let snapshot = self.cells().to_vec();
         let mut flips = Vec::new();
@@ -26,8 +33,9 @@ impl Grid {
                 if nx < 0 || ny < 0 || nx >= w || ny >= h {
                     continue;
                 }
-                if let Cell::Fluid(p) = snapshot[(ny * w + nx) as usize] {
-                    counts[p as usize] += 1;
+                let n = (ny * w + nx) as usize;
+                if let Cell::Fluid(p) = snapshot[n] {
+                    counts[p as usize] += if pushes(n, i) { PUSH_WEIGHT } else { 1 };
                 }
             }
             let own_count = counts[own as usize];
