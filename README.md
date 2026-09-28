@@ -35,6 +35,8 @@ cargo run -p fluid_game
 ```
 
 Controls: player 1 (cyan) uses **WASD**, player 2 (magenta) uses the **arrow keys**.
+A match lasts 3 minutes. It ends early when only one colour is left; otherwise
+the most cells wins. Press **Enter** after a match for a rematch.
 
 ## Test
 
