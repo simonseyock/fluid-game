@@ -5,6 +5,7 @@
 //! same inputs give the same state on every machine.
 
 mod command;
+mod distance;
 mod grid;
 mod state;
 

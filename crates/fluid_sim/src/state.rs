@@ -1,3 +1,4 @@
+use crate::distance::distance_field;
 use crate::{Cell, Command, Grid, PlayerId};
 
 /// Cursor positions are fixed-point: one cell is `SUBCELL` units wide. This lets
@@ -9,6 +10,10 @@ pub const MAX_PLAYERS: usize = 4;
 
 /// Spawn anchors as fractions (numerator / 8) of grid width and height, per slot.
 const SPAWN_ANCHORS: [(usize, usize); MAX_PLAYERS] = [(2, 4), (6, 4), (4, 2), (4, 6)];
+
+/// Pressure moves at most 1 in `PRESSURE_RATE` of a blob's edge cells per tick,
+/// so reshaping looks like flowing rather than jumping.
+const PRESSURE_RATE: usize = 8;
 
 /// Settings chosen before a match (ADR 0003, 0005).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -107,9 +112,12 @@ impl GameState {
             self.move_cursor(p, command);
         }
         let distances: Vec<Vec<u32>> = (0..self.player_count())
-            .map(|p| self.distance_field(p))
+            .map(|p| distance_field(&self.grid, self.cursors[p].cell()))
             .collect();
         self.move_fluid(&distances);
+        for (p, dist) in distances.iter().enumerate() {
+            self.equalize_pressure(p as PlayerId, dist);
+        }
         self.tick += 1;
     }
 
@@ -137,32 +145,9 @@ impl GameState {
         cursor.y = (cursor.y + dy).clamp(0, max_y);
     }
 
-    /// Steps from every cell to player `p`'s cursor, going around obstacles
-    /// but through fluid. `u32::MAX` means unreachable.
-    fn distance_field(&self, p: usize) -> Vec<u32> {
-        let grid = &self.grid;
-        let mut dist = vec![u32::MAX; grid.cells().len()];
-        let (cx, cy) = self.cursors[p].cell();
-        let start = grid.index(cx, cy);
-        if grid.cells()[start] == Cell::Obstacle {
-            return dist;
-        }
-        let mut queue = std::collections::VecDeque::from([start]);
-        dist[start] = 0;
-        while let Some(i) = queue.pop_front() {
-            for n in grid.neighbours(i) {
-                if dist[n] == u32::MAX && grid.cells()[n] != Cell::Obstacle {
-                    dist[n] = dist[i] + 1;
-                    queue.push_back(n);
-                }
-            }
-        }
-        dist
-    }
-
-    /// Each fluid cell moves at most one step toward its own cursor, into an
-    /// empty neighbour. Cells closest to their cursor move first, so a blob
-    /// flows as a whole instead of stretching out.
+    /// Each fluid cell moves at most one step toward its own cursor, into the
+    /// closest empty neighbour. Cells closest to their cursor move first, so a
+    /// blob flows as a whole instead of stretching out.
     fn move_fluid(&mut self, distances: &[Vec<u32>]) {
         let players = self.player_count() as u64;
         let rotation = (self.tick % players) as usize;
@@ -192,29 +177,69 @@ impl GameState {
                 continue;
             };
             let dist = &distances[p as usize];
-            let neighbours: Vec<usize> = self.grid.neighbours(i).collect();
             let cells = self.grid.cells();
-            let free_closer = neighbours
-                .iter()
-                .copied()
-                .find(|&n| cells[n] == Cell::Empty && dist[n] < d);
-            // Blocked from getting closer: slide sideways so fluid flows around.
-            let blocked = neighbours.iter().any(|&n| dist[n] < d);
-            let target = free_closer.or_else(|| {
-                blocked
-                    .then(|| {
-                        neighbours
-                            .iter()
-                            .copied()
-                            .find(|&n| cells[n] == Cell::Empty && dist[n] == d)
-                    })
-                    .flatten()
-            });
+            let target = self
+                .grid
+                .neighbours(i)
+                .filter(|&n| cells[n] == Cell::Empty && dist[n] < d)
+                .min_by_key(|&n| dist[n]);
             if let Some(n) = target {
                 let cells = self.grid.cells_mut();
                 cells[n] = Cell::Fluid(p);
                 cells[i] = Cell::Empty;
                 moved[n] = true;
+            }
+        }
+    }
+
+    /// Pressure: within each connected blob of player `p`, fluid drains from
+    /// the edge cells furthest from the cursor into the free cells next to the
+    /// blob that are closest to it, like water levelling out. Only moves that
+    /// bring fluid closer happen, so the blob settles into the shape closest
+    /// to its cursor: a circle when nothing is in the way.
+    fn equalize_pressure(&mut self, p: PlayerId, dist: &[u32]) {
+        let fluid = Cell::Fluid(p);
+        let mut seen = vec![false; self.grid.cells().len()];
+        for start in 0..seen.len() {
+            if seen[start] || self.grid.cells()[start] != fluid {
+                continue;
+            }
+            // Collect one 4-connected blob, its edge cells and the free cells around it.
+            let (mut edge, mut free) = (Vec::new(), Vec::new());
+            let mut stack = vec![start];
+            seen[start] = true;
+            while let Some(i) = stack.pop() {
+                let mut on_edge = false;
+                for n in self.grid.neighbours(i) {
+                    match self.grid.cells()[n] {
+                        c if c == fluid && !seen[n] => {
+                            seen[n] = true;
+                            stack.push(n);
+                        }
+                        Cell::Empty => {
+                            on_edge = true;
+                            if dist[n] != u32::MAX {
+                                free.push(n);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                if on_edge {
+                    edge.push(i);
+                }
+            }
+            free.sort_unstable_by_key(|&n| (dist[n], n));
+            free.dedup();
+            edge.sort_unstable_by_key(|&i| (std::cmp::Reverse(dist[i]), i));
+            let budget = edge.len().div_ceil(PRESSURE_RATE);
+            let cells = self.grid.cells_mut();
+            for (&from, &to) in edge.iter().zip(&free).take(budget) {
+                if dist[to] >= dist[from] {
+                    break;
+                }
+                cells[to] = fluid;
+                cells[from] = Cell::Empty;
             }
         }
     }
