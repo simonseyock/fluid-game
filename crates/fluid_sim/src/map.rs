@@ -47,6 +47,63 @@ impl Map {
         ],
     };
 
+    /// Long walls split the map into lanes, with a block in the centre:
+    /// getting at an opponent means flanking.
+    pub const CORRIDORS: Map = Map {
+        name: "Corridors",
+        obstacles: &[
+            rect(0, 4, 6, 5),
+            rect(10, 4, 16, 5),
+            rect(0, 11, 6, 12),
+            rect(10, 11, 16, 12),
+            rect(7, 7, 9, 9),
+        ],
+    };
+
+    /// An open centre inside a ring of four big pillars.
+    pub const ARENA: Map = Map {
+        name: "Arena",
+        obstacles: &[
+            rect(4, 4, 6, 6),
+            rect(10, 4, 12, 6),
+            rect(4, 10, 6, 12),
+            rect(10, 10, 12, 12),
+        ],
+    };
+
+    /// Diagonal walls fence each spawn into its own zone. Every zone opens
+    /// wide onto the central hub and through a narrow slip at its corner.
+    pub const DIAGONALS: Map = Map {
+        name: "Diagonals",
+        obstacles: &[
+            rect(1, 1, 2, 2),
+            rect(2, 2, 3, 3),
+            rect(3, 3, 4, 4),
+            rect(4, 4, 5, 5),
+            rect(14, 1, 15, 2),
+            rect(13, 2, 14, 3),
+            rect(12, 3, 13, 4),
+            rect(11, 4, 12, 5),
+            rect(1, 14, 2, 15),
+            rect(2, 13, 3, 14),
+            rect(3, 12, 4, 13),
+            rect(4, 11, 5, 12),
+            rect(14, 14, 15, 15),
+            rect(13, 13, 14, 14),
+            rect(12, 12, 13, 13),
+            rect(11, 11, 12, 12),
+        ],
+    };
+
+    /// Every built-in map, in the order the setup screen lists them.
+    pub const ALL: &'static [Map] = &[
+        Map::PILLARS,
+        Map::ARENA,
+        Map::CORRIDORS,
+        Map::DIAGONALS,
+        Map::EMPTY,
+    ];
+
     /// Mark this map's obstacles on `grid`, scaled to its size.
     pub(crate) fn apply(&self, grid: &mut Grid) {
         let (w, h) = (grid.width(), grid.height());

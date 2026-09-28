@@ -22,9 +22,6 @@ pub enum Screen {
 /// two key zones and the mouse, so at most three local players.
 pub const DEVICES: [Device; 3] = [Device::KeyZone(0), Device::KeyZone(1), Device::Mouse];
 
-/// Maps to choose from.
-pub const MAPS: [Map; 2] = [Map::PILLARS, Map::EMPTY];
-
 const MIN_PLAYERS: usize = 2;
 const WIDTHS: std::ops::RangeInclusive<usize> = 60..=240;
 const HEIGHTS: std::ops::RangeInclusive<usize> = 40..=135;
@@ -190,7 +187,7 @@ fn setup_menu(
                     egui::ComboBox::from_id_salt("map")
                         .selected_text(choices.map.name)
                         .show_ui(ui, |ui| {
-                            for map in MAPS {
+                            for &map in Map::ALL {
                                 ui.selectable_value(&mut choices.map, map, map.name);
                             }
                         });
