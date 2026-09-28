@@ -27,6 +27,7 @@ The first build compiles Bevy and takes several minutes. Later builds are fast.
 - `crates/fluid_sim`: the deterministic simulation core (ADR 0002). Plain Rust,
   no Bevy. Tests are in `crates/fluid_sim/tests/`.
 - `crates/fluid_game`: the Bevy desktop app: input, rendering, fixed-timestep loop.
+  Tests (grid layout, input devices) are in `crates/fluid_game/tests/`.
 
 ## Run
 
@@ -34,14 +35,18 @@ The first build compiles Bevy and takes several minutes. Later builds are fast.
 cargo run -p fluid_game
 ```
 
-Controls: player 1 (cyan) uses **WASD**, player 2 (magenta) uses the **arrow keys**.
+Controls: player 1 (cyan) uses **WASD**, player 2 (magenta) the **arrow keys**,
+player 3 (lime) the **mouse**. During a match the mouse pointer is hidden and
+held inside the window; it's released when the match ends or the window loses
+focus.
 A match lasts 3 minutes. It ends early when only one colour is left; otherwise
-the most cells wins. Press **Enter** after a match for a rematch.
+the most cells wins. Press **Enter** after a match for a rematch, and **Esc**
+at any time to quit.
 
 ## Test
 
 ```sh
-cargo test -p fluid_sim          # simulation rules
+cargo test --workspace           # simulation rules and app input
 cargo clippy --workspace --all-targets
 cargo fmt --all --check
 ```
