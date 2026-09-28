@@ -8,6 +8,7 @@ pub mod layout;
 pub mod pause;
 pub mod render;
 pub mod setup;
+pub mod style;
 
 use bevy::prelude::*;
 use fluid_sim::GameState;
@@ -37,7 +38,7 @@ pub fn run() {
         .insert_resource(LocalControls(choices.devices.clone()))
         .insert_resource(Sim(GameState::new(choices.match_config())))
         .add_plugins(setup::SetupPlugin)
-        .add_plugins(pause::PausePlugin)
+        .add_plugins((pause::PausePlugin, style::StylePlugin))
         .add_systems(
             FixedUpdate,
             tick.run_if(in_state(Screen::Match).and_then(pause::not_paused)),

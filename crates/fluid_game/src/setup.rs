@@ -7,7 +7,7 @@ use bevy_egui::{EguiContexts, EguiPlugin, EguiPrimaryContextPass, egui};
 use fluid_sim::{GameState, Map, MatchConfig};
 
 use crate::input::{Device, LocalControls, MouseTarget};
-use crate::render::PLAYER_NAMES;
+use crate::render::{PLAYER_COLORS, PLAYER_NAMES};
 use crate::{Sim, TICK_HZ};
 
 /// Which screen the game is on.
@@ -205,7 +205,8 @@ fn setup_menu(
                     ui.end_row();
 
                     for (p, chosen) in choices.devices.iter_mut().enumerate() {
-                        ui.label(PLAYER_NAMES[p]);
+                        let [r, g, b, _] = PLAYER_COLORS[p];
+                        ui.colored_label(egui::Color32::from_rgb(r, g, b), PLAYER_NAMES[p]);
                         egui::ComboBox::from_id_salt(("device", p))
                             .selected_text(device_name(*chosen))
                             .show_ui(ui, |ui| {
