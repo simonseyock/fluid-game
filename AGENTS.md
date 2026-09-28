@@ -50,6 +50,11 @@ itself with a concrete test before the next slice starts.
   to `main`**. Branch off `main`, commit and push to the branch, then open a PR
   on Gitea that references its issue (e.g. `Closes #12`). Leave the PR open
   for the user to review and merge. Never merge it yourself.
+- **Every PR targets `main`.** If a branch builds on another PR that isn't
+  merged yet, still target `main`, say so at the top of the PR ("merge #N
+  first"), and note that the diff shows #N's commits until it's merged.
+  Never target another feature branch: a PR merged into a side branch after
+  that branch reached `main` never lands in `main`.
 - Before committing new or changed architecture decisions, ask the user to
   review and accept them first.
 - **Test instructions:** after pushing, give the user what they need to test
