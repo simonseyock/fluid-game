@@ -1,5 +1,5 @@
 use crate::distance::distance_field;
-use crate::{Cell, Command, Grid, PlayerId};
+use crate::{Cell, Command, Grid, Map, PlayerId};
 
 /// Cursor positions are fixed-point: one cell is `SUBCELL` units wide. This lets
 /// cursors move slower than one cell per tick without floats (ADR 0002, 0006).
@@ -30,6 +30,8 @@ pub struct MatchConfig {
     /// Fluid steps per tick, in `SUBCELL` units (`SUBCELL` = one step every
     /// tick). Lower than `cursor_speed`, so fluid trails behind its cursor.
     pub fluid_speed: i32,
+    /// Obstacle layout, scaled to the grid size.
+    pub map: Map,
 }
 
 impl Default for MatchConfig {
@@ -40,6 +42,7 @@ impl Default for MatchConfig {
             player_count: 2,
             cursor_speed: SUBCELL / 2,
             fluid_speed: SUBCELL / 3,
+            map: Map::EMPTY,
         }
     }
 }
@@ -79,6 +82,7 @@ impl GameState {
         );
         let (w, h) = (config.width, config.height);
         let mut grid = Grid::new(w, h);
+        config.map.apply(&mut grid);
         let side = (w.min(h) / 5).max(1);
         let mut cursors = Vec::with_capacity(config.player_count);
         for (p, &(ax, ay)) in SPAWN_ANCHORS.iter().take(config.player_count).enumerate() {
@@ -86,7 +90,9 @@ impl GameState {
             let (x0, y0) = (cx.saturating_sub(side / 2), cy.saturating_sub(side / 2));
             for y in y0..(y0 + side).min(h) {
                 for x in x0..(x0 + side).min(w) {
-                    grid.set(x, y, Cell::Fluid(p as PlayerId));
+                    if grid.get(x, y) == Cell::Empty {
+                        grid.set(x, y, Cell::Fluid(p as PlayerId));
+                    }
                 }
             }
             cursors.push(Cursor {

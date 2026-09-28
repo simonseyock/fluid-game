@@ -27,19 +27,17 @@ const MOVES: [(i32, i32, u32); 16] = [
     (-1, -2, 11),
 ];
 
-/// Distance from `from` to every cell, 5 units per cell. Fluid
-/// doesn't block the path, obstacles do. `u32::MAX` means unreachable.
+/// Distance from `from` to every cell, 5 units per cell. Fluid doesn't block
+/// the path, obstacles do: a path may leave an obstacle but never enter one.
+/// So a cursor over a wall pulls fluid to the nearest open cells around it.
+/// `u32::MAX` means unreachable.
 pub fn distance_field(grid: &Grid, from: (usize, usize)) -> Vec<u32> {
     let (w, h) = (grid.width() as i32, grid.height() as i32);
     let cells = grid.cells();
-    let open = |x: i32, y: i32| {
-        x >= 0 && y >= 0 && x < w && y < h && cells[(y * w + x) as usize] != Cell::Obstacle
-    };
+    let in_grid = |x: i32, y: i32| x >= 0 && y >= 0 && x < w && y < h;
+    let open = |x: i32, y: i32| in_grid(x, y) && cells[(y * w + x) as usize] != Cell::Obstacle;
     let mut dist = vec![u32::MAX; cells.len()];
     let (sx, sy) = (from.0 as i32, from.1 as i32);
-    if !open(sx, sy) {
-        return dist;
-    }
     let start = (sy * w + sx) as usize;
     dist[start] = 0;
     let mut heap = BinaryHeap::from([Reverse((0u32, start))]);
@@ -48,9 +46,15 @@ pub fn distance_field(grid: &Grid, from: (usize, usize)) -> Vec<u32> {
             continue;
         }
         let (x, y) = (i as i32 % w, i as i32 / w);
+        let inside_obstacle = !open(x, y);
         for &(dx, dy, cost) in &MOVES {
             let (nx, ny) = (x + dx, y + dy);
-            if !open(nx, ny) || !clears_corners(&open, x, y, dx, dy) {
+            let allowed = if inside_obstacle {
+                in_grid(nx, ny)
+            } else {
+                open(nx, ny) && clears_corners(&open, x, y, dx, dy)
+            };
+            if !allowed {
                 continue;
             }
             let n = (ny * w + nx) as usize;
