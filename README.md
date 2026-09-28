@@ -46,8 +46,8 @@ choices kept. During a match with a mouse player, the pointer is hidden and held
 inside the window; it's released when the match ends, the game is paused, or
 the window loses focus.
 
-**Esc** during a match pauses and asks whether to continue or go back to the
-setup screen (Esc again continues). On the setup screen, **Esc** quits.
+**Esc** during a match pauses and offers **Continue** (or Esc again), **Back to
+setup** and **Quit**. On the setup screen, **Esc** quits.
 
 ## Test
 
