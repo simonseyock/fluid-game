@@ -1,8 +1,10 @@
 //! Draws the grid as one texture, one texel per cell, scaled to fit the window
-//! (ADR 0003). Neon colors on black.
+//! (ADR 0003). Neon colors on black, with HDR bloom so the fluid glows.
 
 use bevy::asset::RenderAssetUsages;
+use bevy::camera::Hdr;
 use bevy::image::ImageSampler;
+use bevy::post_process::bloom::Bloom;
 use bevy::prelude::*;
 use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use fluid_sim::{Cell, GameState};
@@ -19,8 +21,11 @@ pub const PLAYER_COLORS: [[u8; 4]; 4] = [
 ];
 /// Display name per player slot, matching `PLAYER_COLORS`.
 pub const PLAYER_NAMES: [&str; 4] = ["Cyan", "Magenta", "Lime", "Orange"];
+/// Brightness boost for the grid in HDR. Colours above 1.0 feed the bloom,
+/// so bright fluid glows while dim obstacles and black background stay put.
+const GLOW: f32 = 2.5;
 const BACKGROUND: [u8; 4] = [0, 0, 0, 255];
-const OBSTACLE: [u8; 4] = [40, 40, 70, 255];
+const OBSTACLE: [u8; 4] = [14, 14, 32, 255];
 /// A cursor: a plus-shaped cross, and the cells around it as its outline.
 const CURSOR_CROSS: [(i64, i64); 5] = [(0, 0), (-1, 0), (1, 0), (0, -1), (0, 1)];
 const CURSOR_OUTLINE: [(i64, i64); 8] = [
@@ -63,8 +68,14 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>, sim: Res<Sim
     );
     // Crisp cells, no smoothing between them.
     image.sampler = ImageSampler::nearest();
-    commands.spawn(Camera2d);
-    commands.spawn((Sprite::from_image(images.add(image)), GridSprite));
+    commands.spawn((Camera2d, Hdr, Bloom::NATURAL));
+    commands.spawn((
+        Sprite {
+            color: Color::linear_rgb(GLOW, GLOW, GLOW),
+            ..Sprite::from_image(images.add(image))
+        },
+        GridSprite,
+    ));
 }
 
 fn draw_grid(
