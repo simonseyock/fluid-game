@@ -95,12 +95,73 @@ impl Map {
         ],
     };
 
+    /// A small labyrinth: bent walls around every spawn, short stubs at the
+    /// edges and bars across the centre.
+    pub const LABYRINTH: Map = Map {
+        name: "Labyrinth",
+        obstacles: &[
+            rect(0, 6, 1, 7),
+            rect(0, 9, 1, 10),
+            rect(1, 1, 5, 2),
+            rect(1, 2, 2, 5),
+            rect(1, 11, 2, 14),
+            rect(1, 14, 5, 15),
+            rect(3, 3, 5, 4),
+            rect(3, 4, 4, 6),
+            rect(3, 10, 4, 12),
+            rect(3, 12, 5, 13),
+            rect(5, 0, 6, 1),
+            rect(5, 15, 6, 16),
+            rect(7, 6, 9, 7),
+            rect(7, 9, 9, 10),
+            rect(10, 0, 11, 1),
+            rect(10, 15, 11, 16),
+            rect(11, 1, 15, 2),
+            rect(11, 3, 13, 4),
+            rect(11, 12, 13, 13),
+            rect(11, 14, 15, 15),
+            rect(12, 4, 13, 6),
+            rect(12, 10, 13, 12),
+            rect(14, 2, 15, 5),
+            rect(14, 11, 15, 14),
+            rect(15, 6, 16, 7),
+            rect(15, 9, 16, 10),
+        ],
+    };
+
+    /// One huge block in the middle, filling the space between the spawns.
+    pub const MONOLITH: Map = Map {
+        name: "Monolith",
+        obstacles: &[rect(6, 6, 10, 10)],
+    };
+
+    /// Every colour starts in a U-shaped bunker: the central block behind it,
+    /// walls on both sides, open only toward the map edge. The fight begins
+    /// by breaking out and going round.
+    pub const BUNKERS: Map = Map {
+        name: "Bunkers",
+        obstacles: &[
+            rect(6, 6, 10, 10),
+            rect(3, 5, 6, 6),
+            rect(10, 5, 13, 6),
+            rect(3, 10, 6, 11),
+            rect(10, 10, 13, 11),
+            rect(5, 3, 6, 5),
+            rect(10, 3, 11, 5),
+            rect(5, 11, 6, 13),
+            rect(10, 11, 11, 13),
+        ],
+    };
+
     /// Every built-in map, in the order the setup screen lists them.
     pub const ALL: &'static [Map] = &[
         Map::PILLARS,
         Map::ARENA,
         Map::CORRIDORS,
         Map::DIAGONALS,
+        Map::LABYRINTH,
+        Map::MONOLITH,
+        Map::BUNKERS,
         Map::EMPTY,
     ];
 
