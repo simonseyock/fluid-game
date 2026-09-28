@@ -8,6 +8,7 @@ use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use fluid_sim::Cell;
 
 use crate::Sim;
+use crate::layout::GridLayout;
 
 /// Neon color per player slot, as RGBA.
 pub const PLAYER_COLORS: [[u8; 4]; 4] = [
@@ -100,8 +101,6 @@ fn fit_to_window(
     sim: Res<Sim>,
     mut sprite: Single<&mut Sprite, With<GridSprite>>,
 ) {
-    let grid = &sim.0.grid;
-    let grid_size = Vec2::new(grid.width() as f32, grid.height() as f32);
-    let scale = (window.width() / grid_size.x).min(window.height() / grid_size.y);
-    sprite.custom_size = Some(grid_size * scale);
+    let grid = (sim.0.grid.width(), sim.0.grid.height());
+    sprite.custom_size = Some(GridLayout::fit(window.size(), grid).size());
 }
