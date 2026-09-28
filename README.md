@@ -35,13 +35,16 @@ The first build compiles Bevy and takes several minutes. Later builds are fast.
 cargo run -p fluid_game
 ```
 
-Controls: player 1 (cyan) uses **WASD**, player 2 (magenta) the **arrow keys**,
-player 3 (lime) the **mouse**. During a match the mouse pointer is hidden and
-held inside the window; it's released when the match ends or the window loses
-focus.
-A match lasts 3 minutes. It ends early when only one colour is left; otherwise
-the most cells wins. Press **Enter** after a match for a rematch, and **Esc**
-at any time to quit.
+The game opens on the **setup screen**: choose the grid size, match length, map,
+number of players (2–3) and each player's device (WASD, arrow keys or mouse).
+The grid behind the menu previews your choices. **Start** or **Enter** begins
+the match.
+
+A match ends early when only one colour is left; otherwise the most cells wins
+when the clock runs out. **Enter** then returns to the setup screen with your
+choices kept. During a match with a mouse player, the pointer is hidden and held
+inside the window; it's released when the match ends or the window loses focus.
+**Esc** quits at any time.
 
 ## Test
 

@@ -8,6 +8,7 @@ use fluid_sim::Command;
 
 use crate::Sim;
 use crate::layout::GridLayout;
+use crate::setup::Screen;
 
 /// The device driving one local player slot.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -103,14 +104,19 @@ fn track_mouse(
 }
 
 /// While a match with a mouse player runs and the window has focus, hide the
-/// OS pointer and keep it inside the window (ADR 0004). Release it otherwise.
+/// OS pointer and keep it inside the window (ADR 0004). Release it otherwise,
+/// including on the setup screen.
 fn grab_pointer(
     window: Single<(&Window, &mut CursorOptions), With<PrimaryWindow>>,
     sim: Res<Sim>,
     controls: Res<LocalControls>,
+    screen: Res<State<Screen>>,
 ) {
     let (window, mut cursor) = window.into_inner();
-    let grab = window.focused && sim.0.outcome().is_none() && controls.0.contains(&Device::Mouse);
+    let grab = window.focused
+        && *screen.get() == Screen::Match
+        && sim.0.outcome().is_none()
+        && controls.0.contains(&Device::Mouse);
     let (visible, mode) = if grab {
         (false, CursorGrabMode::Confined)
     } else {

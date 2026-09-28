@@ -68,7 +68,7 @@ fn update_result(
             (format!("Tie: {}", names.join(" & ")), [255, 255, 255, 255])
         }
     };
-    text.0 = format!("{headline}\nPress Enter for a rematch");
+    text.0 = format!("{headline}\nPress Enter to continue");
     color.0 = Color::srgba_u8(rgba[0], rgba[1], rgba[2], rgba[3]);
 }
 
