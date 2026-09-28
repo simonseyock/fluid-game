@@ -76,4 +76,24 @@ impl Grid {
         .into_iter()
         .flatten()
     }
+
+    /// The diagonal neighbours of cell index `i` inside the grid, each as
+    /// `(diagonal, side_a, side_b)`, where the sides are the two orthogonal
+    /// cells a diagonal step squeezes between.
+    pub(crate) fn diagonals(
+        &self,
+        i: usize,
+    ) -> impl Iterator<Item = (usize, usize, usize)> + use<> {
+        let (w, h) = (self.width, self.height);
+        let (x, y) = (i % w, i / w);
+        let (up, down, left, right) = (y > 0, y + 1 < h, x > 0, x + 1 < w);
+        [
+            (up && right).then(|| (i - w + 1, i - w, i + 1)),
+            (down && right).then(|| (i + w + 1, i + w, i + 1)),
+            (down && left).then(|| (i + w - 1, i + w, i - 1)),
+            (up && left).then(|| (i - w - 1, i - w, i - 1)),
+        ]
+        .into_iter()
+        .flatten()
+    }
 }

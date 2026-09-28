@@ -77,3 +77,60 @@ fn same_inputs_give_same_state() {
     }
     assert_eq!(a, b);
 }
+
+/// Average position of player 0's fluid, in cells.
+fn centroid(s: &GameState) -> (f64, f64) {
+    let g = &s.grid;
+    let cells: Vec<(usize, usize)> = (0..g.height())
+        .flat_map(|y| (0..g.width()).map(move |x| (x, y)))
+        .filter(|&(x, y)| g.get(x, y) == Cell::Fluid(0))
+        .collect();
+    let n = cells.len() as f64;
+    let sum = cells
+        .iter()
+        .fold((0, 0), |(sx, sy), &(x, y)| (sx + x, sy + y));
+    (sum.0 as f64 / n, sum.1 as f64 / n)
+}
+
+/// Steer player 0 with `command` and check its fluid covers clearly less
+/// ground than its cursor over a stretch of steady movement.
+fn assert_fluid_slower(command: Command) {
+    let mut s = GameState::new(MatchConfig {
+        width: 160,
+        height: 160,
+        ..MatchConfig::default()
+    });
+    let commands = [command, Command::Idle];
+    // Get going, then measure.
+    for _ in 0..40 {
+        s.step(&commands);
+    }
+    let (cursor_before, fluid_before) = (s.cursors[0], centroid(&s));
+    for _ in 0..80 {
+        s.step(&commands);
+    }
+    let (cdx, cdy) = (
+        f64::from(s.cursors[0].x - cursor_before.x) / f64::from(SUBCELL),
+        f64::from(s.cursors[0].y - cursor_before.y) / f64::from(SUBCELL),
+    );
+    let fluid_after = centroid(&s);
+    let (fdx, fdy) = (
+        fluid_after.0 - fluid_before.0,
+        fluid_after.1 - fluid_before.1,
+    );
+    let (cursor_cells, fluid_cells) = (cdx.hypot(cdy), fdx.hypot(fdy));
+    assert!(
+        fluid_cells < 0.8 * cursor_cells,
+        "fluid moved {fluid_cells:.1} cells while the cursor moved {cursor_cells:.1}"
+    );
+}
+
+#[test]
+fn fluid_moves_slower_than_the_cursor() {
+    assert_fluid_slower(Command::Direction { dx: 1, dy: 0 });
+}
+
+#[test]
+fn fluid_moves_slower_than_the_cursor_diagonally() {
+    assert_fluid_slower(Command::Direction { dx: 1, dy: 1 });
+}
